@@ -65,3 +65,7 @@ Basta abrir o arquivo `index.html` em um navegador moderno.
 - Plotagem de figuras geométricas completas (polígonos)
 - Visualização do plano cartesiano com grade, eixos rotulados e escala automática
 - Saída textual com as coordenadas antes e depois da transformação
+
+## Documentação
+
+A documentação técnica completa, com referência das funções, fundamentação matemática e decisões de projeto, está em [docs/DOCUMENTATION.md](docs/DOCUMENTATION.md).
