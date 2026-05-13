@@ -51,9 +51,32 @@ class _TopBar extends StatelessWidget {
     return Row(
       children: [
         Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: Colors.white, size: 28),
-            onPressed: () => Scaffold.of(context).openDrawer(),
+          builder: (context) => GestureDetector(
+            onTap: () => Scaffold.of(context).openDrawer(),
+            child: Container(
+              width: 38,
+              height: 38,
+              margin: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF6E3DE8), Color(0xFFB14CFF)],
+                ),
+                border: Border.all(color: AppColors.accent, width: 2),
+              ),
+              padding: const EdgeInsets.all(2),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/images/jeff.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => const Icon(
+                    Icons.person,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
         const Expanded(

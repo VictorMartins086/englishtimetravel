@@ -276,43 +276,54 @@ class _ResultScreen extends StatelessWidget {
   final CampaignChapter chapter;
   final int score;
 
+  /// 1..5 stars based on percentage. Zero acertos = 0 estrelas.
+  int _starsFor(double pct) {
+    if (score == 0) return 0;
+    if (pct >= 0.95) return 5;
+    if (pct >= 0.80) return 4;
+    if (pct >= 0.60) return 3;
+    if (pct >= 0.40) return 2;
+    return 1;
+  }
+
+  CampaignChapter? _nextChapter() {
+    final idx = Campaign.chapters.indexWhere((c) => c.id == chapter.id);
+    if (idx < 0 || idx + 1 >= Campaign.chapters.length) return null;
+    return Campaign.chapters[idx + 1];
+  }
+
   @override
   Widget build(BuildContext context) {
     final total = chapter.questions.length;
     final pct = score / total;
     final passed = pct >= 0.6;
-    final stars = pct >= 0.9
-        ? 3
-        : pct >= 0.7
-            ? 2
-            : pct >= 0.5
-                ? 1
-                : 0;
+    final stars = _starsFor(pct);
+    final next = _nextChapter();
+    final hasNext = passed && next != null;
 
     return Scaffold(
       body: StarryBackground(
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   passed ? 'Capitulo concluido!' : 'Quase la!',
                   style: const TextStyle(
-                    fontSize: 26,
+                    fontSize: 24,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   '${chapter.year} - ${chapter.title}',
                   style: const TextStyle(color: AppColors.accent),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 20),
                 Container(
-                  width: 180,
-                  height: 180,
+                  width: 140,
+                  height: 140,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
@@ -323,41 +334,44 @@ class _ResultScreen extends StatelessWidget {
                     ),
                   ),
                   alignment: Alignment.center,
-                  child: Icon(chapter.icon, size: 100, color: Colors.white),
+                  child: Icon(chapter.icon, size: 78, color: Colors.white),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(3, (i) {
-                    return Icon(
-                      Icons.star_rounded,
-                      size: 56,
-                      color: i < stars
-                          ? AppColors.gold
-                          : AppColors.border,
+                  children: List.generate(5, (i) {
+                    final filled = i < stars;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      child: Icon(
+                        filled
+                            ? Icons.star_rounded
+                            : Icons.star_outline_rounded,
+                        size: 40,
+                        color: filled ? AppColors.gold : AppColors.border,
+                      ),
                     );
                   }),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
                 Text(
                   '$score de $total acertos',
                   style: const TextStyle(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 14),
                 if (passed)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.star_rounded,
-                          color: AppColors.gold),
+                      const Icon(Icons.star_rounded, color: AppColors.gold),
                       const SizedBox(width: 4),
                       Text(
                         '+${chapter.xpReward * score ~/ total} XP',
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 15,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -368,19 +382,19 @@ class _ResultScreen extends StatelessWidget {
                       Text(
                         '+${chapter.coinReward * score ~/ total}',
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 15,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                     ],
                   ),
                 if (passed) ...[
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 16),
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: AppColors.accent.withValues(alpha: 0.5),
                       ),
@@ -420,8 +434,43 @@ class _ResultScreen extends StatelessWidget {
                 const Spacer(),
                 SizedBox(
                   width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                  child: FilledButton.icon(
+                    onPressed: () {
+                      final navigator = Navigator.of(context);
+                      if (hasNext) {
+                        navigator.pushReplacement(
+                          MaterialPageRoute(
+                            builder: (_) => QuizScreen(chapter: next),
+                          ),
+                        );
+                      } else if (!passed) {
+                        // Retry the same chapter.
+                        navigator.pushReplacement(
+                          MaterialPageRoute(
+                            builder: (_) => QuizScreen(chapter: chapter),
+                          ),
+                        );
+                      } else {
+                        // Final chapter completed — back to home.
+                        navigator.popUntil((r) => r.isFirst);
+                      }
+                    },
+                    icon: Icon(
+                      hasNext
+                          ? Icons.skip_next_rounded
+                          : passed
+                              ? Icons.home_rounded
+                              : Icons.replay_rounded,
+                    ),
+                    label: Text(
+                      hasNext
+                          ? 'Proximo capitulo'
+                          : passed
+                              ? 'Voltar para a base'
+                              : 'Tentar novamente',
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w800),
+                    ),
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
@@ -430,10 +479,21 @@ class _ResultScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    child: const Text(
-                      'Continuar a jornada',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton.icon(
+                    onPressed: () => Navigator.of(context)
+                        .popUntil((r) => r.isFirst),
+                    icon: const Icon(Icons.map_rounded,
+                        color: AppColors.accent),
+                    label: const Text(
+                      'Voltar ao mapa',
                       style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w800),
+                          color: AppColors.accent,
+                          fontWeight: FontWeight.w700),
                     ),
                   ),
                 ),
