@@ -106,12 +106,19 @@ class PlayerProgress extends ChangeNotifier {
   bool isCompleted(CampaignChapter c) =>
       scoreFor(c.id) >= (c.questions.length * 0.8).ceil();
 
+  /// Whether the player passed (>=60%) this chapter — enough to unlock the next.
+  bool isPassed(CampaignChapter c) =>
+      scoreFor(c.id) >= (c.questions.length * 0.6).ceil();
+
   double progressFor(CampaignChapter c) =>
       scoreFor(c.id) / c.questions.length;
 
+  /// The chapter the home screen highlights as "current": the first chapter
+  /// the player has unlocked but not yet passed. Once every chapter has been
+  /// passed, falls back to the last chapter.
   CampaignChapter get currentChapter {
     for (final c in Campaign.chapters) {
-      if (!isCompleted(c) && isUnlocked(c)) return c;
+      if (isUnlocked(c) && !isPassed(c)) return c;
     }
     return Campaign.chapters.last;
   }
