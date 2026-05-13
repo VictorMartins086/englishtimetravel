@@ -19,6 +19,7 @@ class _QuizScreenState extends State<QuizScreen> {
   int _score = 0;
   int? _selected;
   bool _locked = false;
+  bool _showIntro = true;
 
   Question get _q => widget.chapter.questions[_index];
 
@@ -53,6 +54,12 @@ class _QuizScreenState extends State<QuizScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_showIntro) {
+      return _LoreIntroScreen(
+        chapter: widget.chapter,
+        onBegin: () => setState(() => _showIntro = false),
+      );
+    }
     final total = widget.chapter.questions.length;
     final progress = (_index + (_locked ? 1 : 0)) / total;
 
@@ -366,6 +373,49 @@ class _ResultScreen extends StatelessWidget {
                       ),
                     ],
                   ),
+                if (passed) ...[
+                  const SizedBox(height: 22),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.accent.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: const [
+                            Icon(Icons.auto_stories_rounded,
+                                color: AppColors.accent, size: 18),
+                            SizedBox(width: 6),
+                            Text(
+                              'A jornada continua...',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.2,
+                                color: AppColors.accent,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          chapter.outro,
+                          style: const TextStyle(
+                            height: 1.4,
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const Spacer(),
                 SizedBox(
                   width: double.infinity,
@@ -390,6 +440,252 @@ class _ResultScreen extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Lore intro shown before the player tackles the questions.
+class _LoreIntroScreen extends StatelessWidget {
+  const _LoreIntroScreen({required this.chapter, required this.onBegin});
+  final CampaignChapter chapter;
+  final VoidCallback onBegin;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: Text('${chapter.year} - ${chapter.title}'),
+        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: Colors.transparent,
+      ),
+      body: StarryBackground(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: chapter.color.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: chapter.color.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.place_rounded,
+                          color: chapter.color, size: 16),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          chapter.location,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        '· ${chapter.year}',
+                        style: const TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  width: 100,
+                  height: 100,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        chapter.color.withValues(alpha: 0.6),
+                        Colors.transparent,
+                      ],
+                    ),
+                    border: Border.all(
+                      color: chapter.color,
+                      width: 2,
+                    ),
+                  ),
+                  child:
+                      Icon(chapter.icon, color: Colors.white, size: 54),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  chapter.title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  chapter.subtitle,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Text(
+                            chapter.intro,
+                            style: const TextStyle(
+                              height: 1.5,
+                              fontSize: 14,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.gem.withValues(alpha: 0.25),
+                                AppColors.primary.withValues(alpha: 0.18),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: AppColors.accent.withValues(alpha: 0.5),
+                            ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.format_quote_rounded,
+                                  color: AppColors.accent, size: 28),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  chapter.heroLine,
+                                  style: const TextStyle(
+                                    height: 1.4,
+                                    fontStyle: FontStyle.italic,
+                                    fontSize: 13.5,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            _RewardChip(
+                              icon: Icons.star_rounded,
+                              color: AppColors.gold,
+                              label: '${chapter.xpReward} XP',
+                            ),
+                            const SizedBox(width: 8),
+                            _RewardChip(
+                              icon: Icons.monetization_on_rounded,
+                              color: AppColors.gold,
+                              label: '${chapter.coinReward}',
+                            ),
+                            const SizedBox(width: 8),
+                            _RewardChip(
+                              icon: Icons.help_outline_rounded,
+                              color: AppColors.accent,
+                              label:
+                                  '${chapter.questions.length} questoes',
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: onBegin,
+                    icon: const Icon(Icons.play_arrow_rounded),
+                    label: const Text(
+                      'Comecar capitulo',
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w800),
+                    ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RewardChip extends StatelessWidget {
+  const _RewardChip({
+    required this.icon,
+    required this.color,
+    required this.label,
+  });
+  final IconData icon;
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
+          ),
+        ],
       ),
     );
   }

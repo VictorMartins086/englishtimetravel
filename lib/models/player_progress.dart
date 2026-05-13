@@ -15,6 +15,9 @@ class PlayerProgress extends ChangeNotifier {
   int streak = 7;
   int wordsLearned = 142;
 
+  /// Id of the most recently completed chapter (for "Ultima conquista" card).
+  String? lastCompletedId = 'independence';
+
   /// Map of chapter.id -> best score (0..questions.length). Missing = locked.
   final Map<String, int> _scores = {
     'independence': 5, // completed perfect
@@ -49,6 +52,7 @@ class PlayerProgress extends ChangeNotifier {
 
   void recordScore(CampaignChapter c, int score) {
     final prev = _scores[c.id] ?? 0;
+    final wasCompleted = isCompleted(c);
     if (score > prev) {
       _scores[c.id] = score;
       xp += c.xpReward * score ~/ c.questions.length;
@@ -59,6 +63,19 @@ class PlayerProgress extends ChangeNotifier {
         level++;
       }
     }
+    // Mark as last completed if this run reached the completion threshold.
+    if (!wasCompleted && isCompleted(c)) {
+      lastCompletedId = c.id;
+      streak++;
+    }
     notifyListeners();
+  }
+
+  CampaignChapter? get lastCompletedChapter {
+    if (lastCompletedId == null) return null;
+    for (final c in Campaign.chapters) {
+      if (c.id == lastCompletedId) return c;
+    }
+    return null;
   }
 }

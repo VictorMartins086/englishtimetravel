@@ -25,6 +25,10 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 12),
             const _PlayerCard(),
             const SizedBox(height: 18),
+            if (progress.lastCompletedChapter != null) ...[
+              _LastConquestCard(chapter: progress.lastCompletedChapter!),
+              const SizedBox(height: 14),
+            ],
             _CampaignHero(chapter: progress.currentChapter),
             const SizedBox(height: 22),
             _CampaignProgressHeader(progress: progress),
@@ -325,6 +329,17 @@ class _CampaignHero extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 14),
+          Text(
+            chapter.intro,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.9),
+              fontSize: 13,
+              height: 1.4,
+            ),
+          ),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
@@ -465,6 +480,85 @@ class _DailyMissionCard extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shows the most recently completed chapter's lore outro — encourages
+/// the player by reminding them what they just achieved.
+class _LastConquestCard extends StatelessWidget {
+  const _LastConquestCard({required this.chapter});
+  final CampaignChapter chapter;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF7BD389).withValues(alpha: 0.55),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: chapter.color.withValues(alpha: 0.3),
+                  border: Border.all(color: chapter.color),
+                ),
+                alignment: Alignment.center,
+                child: Icon(chapter.icon,
+                    color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'ULTIMA CONQUISTA',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.4,
+                        color: Color(0xFF7BD389),
+                      ),
+                    ),
+                    Text(
+                      '${chapter.year} — ${chapter.title}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.verified_rounded,
+                  color: Color(0xFF7BD389), size: 22),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            chapter.outro,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12.5,
+              height: 1.4,
             ),
           ),
         ],
