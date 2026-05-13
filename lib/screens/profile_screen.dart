@@ -1,11 +1,43 @@
 import 'package:flutter/material.dart';
 
+import '../models/campaign.dart';
+import '../models/player_progress.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 
 /// Profile screen featuring Jeff's character art on a vibrant cosmic backdrop.
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
+
+  Future<void> _confirmReset(BuildContext context) async {
+    final navigator = Navigator.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Resetar progresso?'),
+        content: const Text(
+          'Isso vai apagar XP, moedas, gemas e todas as conquistas. '
+          'A acao nao pode ser desfeita.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Resetar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await PlayerProgress.instance.resetAll();
+      navigator.pop();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,6 +47,13 @@ class ProfileScreen extends StatelessWidget {
         title: const Text('Perfil'),
         iconTheme: const IconThemeData(color: Colors.white),
         backgroundColor: Colors.transparent,
+        actions: [
+          IconButton(
+            tooltip: 'Resetar progresso',
+            icon: const Icon(Icons.restart_alt_rounded, color: Colors.white),
+            onPressed: () => _confirmReset(context),
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -248,59 +287,71 @@ class _IdentityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
-      ),
-      child: Column(
-        children: [
-          const Text(
-            'Jeff',
-            style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+    return AnimatedBuilder(
+      animation: PlayerProgress.instance,
+      builder: (_, _) {
+        final p = PlayerProgress.instance;
+        final nextLevelXp = p.level * 280 + 600;
+        final levelXp = (p.level - 1) * 280 + 600;
+        final pct = ((p.xp - levelXp) / (nextLevelXp - levelXp))
+            .clamp(0.0, 1.0);
+        return Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: AppColors.surface.withValues(alpha: 0.85),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.4)),
           ),
-          const SizedBox(height: 4),
-          const Text(
-            'Viajante do Tempo',
-            style: TextStyle(color: AppColors.accent),
-          ),
-          const SizedBox(height: 10),
-          const GlowPill(text: 'NIVEL 12'),
-          const SizedBox(height: 14),
-          Container(
-            height: 10,
-            decoration: BoxDecoration(
-              color: AppColors.border,
-              borderRadius: BorderRadius.circular(5),
-            ),
-            child: FractionallySizedBox(
-              alignment: Alignment.centerLeft,
-              widthFactor: 2450 / 3400,
-              child: Container(
+          child: Column(
+            children: [
+              const Text(
+                'Jeff',
+                style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Viajante do Tempo',
+                style: TextStyle(color: AppColors.accent),
+              ),
+              const SizedBox(height: 10),
+              GlowPill(text: 'NIVEL ${p.level}'),
+              const SizedBox(height: 14),
+              Container(
+                height: 10,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.primary, AppColors.accent],
-                  ),
+                  color: AppColors.border,
                   borderRadius: BorderRadius.circular(5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.6),
-                      blurRadius: 10,
+                ),
+                child: FractionallySizedBox(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: pct,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppColors.primary, AppColors.accent],
+                      ),
+                      borderRadius: BorderRadius.circular(5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.6),
+                          blurRadius: 10,
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(height: 6),
+              Text(
+                '${p.xp} / $nextLevelXp XP',
+                style: const TextStyle(
+                    color: AppColors.textMuted, fontSize: 12),
+              ),
+            ],
           ),
-          const SizedBox(height: 6),
-          const Text(
-            '2.450 / 3.400 XP',
-            style: TextStyle(color: AppColors.textMuted, fontSize: 12),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -308,35 +359,41 @@ class _IdentityCard extends StatelessWidget {
 class _StatsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: const [
-        Expanded(
-          child: _StatTile(
-            icon: Icons.local_fire_department_rounded,
-            color: Color(0xFFFF7A3D),
-            value: '7',
-            label: 'Dias seguidos',
-          ),
-        ),
-        SizedBox(width: 10),
-        Expanded(
-          child: _StatTile(
-            icon: Icons.menu_book_rounded,
-            color: AppColors.accent,
-            value: '142',
-            label: 'Palavras',
-          ),
-        ),
-        SizedBox(width: 10),
-        Expanded(
-          child: _StatTile(
-            icon: Icons.emoji_events_rounded,
-            color: AppColors.gold,
-            value: '#4',
-            label: 'Ranking',
-          ),
-        ),
-      ],
+    return AnimatedBuilder(
+      animation: PlayerProgress.instance,
+      builder: (_, _) {
+        final p = PlayerProgress.instance;
+        return Row(
+          children: [
+            Expanded(
+              child: _StatTile(
+                icon: Icons.local_fire_department_rounded,
+                color: const Color(0xFFFF7A3D),
+                value: '${p.streak}',
+                label: 'Dias seguidos',
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _StatTile(
+                icon: Icons.menu_book_rounded,
+                color: AppColors.accent,
+                value: '${p.wordsLearned}',
+                label: 'Palavras',
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _StatTile(
+                icon: Icons.monetization_on_rounded,
+                color: AppColors.gold,
+                value: '${p.coins}',
+                label: 'Moedas',
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -390,90 +447,62 @@ class _StatTile extends StatelessWidget {
 class _AchievementsCard extends StatelessWidget {
   const _AchievementsCard();
 
-  static const _badges = <_Badge>[
-    _Badge('1776', Icons.flag_rounded, AppColors.gold, true),
-    _Badge('Const.', Icons.gavel_rounded, AppColors.accent, true),
-    _Badge('West', Icons.map_rounded, Color(0xFF7BD389), true),
-    _Badge('Gold', Icons.terrain_rounded, AppColors.gold, false),
-    _Badge('War', Icons.shield_rounded, Color(0xFFFF7A3D), false),
-    _Badge('Moon', Icons.rocket_launch_rounded, AppColors.gem, false),
-  ];
-
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'CONQUISTAS',
-            style: TextStyle(
-              fontSize: 12,
-              letterSpacing: 2,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textSecondary,
-            ),
+    return AnimatedBuilder(
+      animation: PlayerProgress.instance,
+      builder: (_, _) {
+        final p = PlayerProgress.instance;
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface.withValues(alpha: 0.85),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.border),
           ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [for (final b in _badges) _BadgeChip(badge: b)],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Badge {
-  const _Badge(this.label, this.icon, this.color, this.earned);
-  final String label;
-  final IconData icon;
-  final Color color;
-  final bool earned;
-}
-
-class _BadgeChip extends StatelessWidget {
-  const _BadgeChip({required this.badge});
-  final _Badge badge;
-
-  @override
-  Widget build(BuildContext context) {
-    return Opacity(
-      opacity: badge.earned ? 1 : 0.4,
-      child: Column(
-        children: [
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: badge.color.withValues(alpha: 0.18),
-              border: Border.all(
-                color: badge.earned ? badge.color : AppColors.border,
-                width: 2,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text(
+                    'CONQUISTAS',
+                    style: TextStyle(
+                      fontSize: 12,
+                      letterSpacing: 2,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '${p.totalCompleted} / ${Campaign.chapters.length}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.accent,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            alignment: Alignment.center,
-            child: Icon(
-              badge.earned ? badge.icon : Icons.lock_rounded,
-              color: badge.earned ? badge.color : AppColors.textMuted,
-            ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (final c in Campaign.chapters)
+                    _BadgeChip(
+                      label: c.year,
+                      icon: c.icon,
+                      color: c.color,
+                      earned: p.isCompleted(c),
+                    ),
+                ],
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            badge.label,
-            style: const TextStyle(fontSize: 11),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -483,46 +512,102 @@ class _StoryProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primary.withValues(alpha: 0.25),
-            AppColors.gem.withValues(alpha: 0.15),
-          ],
-        ),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.5)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.auto_stories_rounded,
-              color: AppColors.accent, size: 36),
-          const SizedBox(width: 14),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Capitulo atual',
-                  style: TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 12,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  '1803 - Louisiana Purchase',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
+    return AnimatedBuilder(
+      animation: PlayerProgress.instance,
+      builder: (_, _) {
+        final c = PlayerProgress.instance.currentChapter;
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            gradient: LinearGradient(
+              colors: [
+                AppColors.primary.withValues(alpha: 0.25),
+                AppColors.gem.withValues(alpha: 0.15),
               ],
             ),
+            border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.5)),
           ),
-          Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+          child: Row(
+            children: [
+              const Icon(Icons.auto_stories_rounded,
+                  color: AppColors.accent, size: 36),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Capitulo atual',
+                      style: TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${c.year} - ${c.title}',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded,
+                  color: AppColors.textMuted),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+
+class _BadgeChip extends StatelessWidget {
+  const _BadgeChip({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.earned,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color color;
+  final bool earned;
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: earned ? 1 : 0.4,
+      child: Column(
+        children: [
+          Container(
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color.withValues(alpha: 0.18),
+              border: Border.all(
+                color: earned ? color : AppColors.border,
+                width: 2,
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              earned ? icon : Icons.lock_rounded,
+              color: earned ? color : AppColors.textMuted,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 11),
+          ),
         ],
       ),
     );
