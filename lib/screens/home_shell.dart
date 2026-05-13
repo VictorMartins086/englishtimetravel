@@ -8,6 +8,7 @@ import 'challenges_screen.dart';
 import 'ranking_screen.dart';
 import 'shop_screen.dart';
 import 'story_screen.dart';
+import 'profile_screen.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -170,7 +171,12 @@ class _StoryDrawer extends StatelessWidget {
               icon: Icons.person_outline,
               title: 'Perfil',
               subtitle: 'Viajante do Tempo',
-              onTap: () => Navigator.pop(context),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                );
+              },
             ),
             _DrawerTile(
               icon: Icons.settings_outlined,

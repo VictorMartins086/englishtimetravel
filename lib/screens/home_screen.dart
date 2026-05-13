@@ -6,6 +6,7 @@ import 'story_screen.dart';
 import 'glossary_screen.dart';
 import 'challenges_screen.dart';
 import 'ranking_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -171,26 +172,40 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 64,
-      height: 64,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: const LinearGradient(
-          colors: [Color(0xFF6E3DE8), Color(0xFFB14CFF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(color: AppColors.accent, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.5),
-            blurRadius: 16,
-          ),
-        ],
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const ProfileScreen()),
       ),
-      alignment: Alignment.center,
-      child: const Icon(Icons.person, color: Colors.white, size: 38),
+      child: Container(
+        width: 64,
+        height: 64,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: const LinearGradient(
+            colors: [Color(0xFF6E3DE8), Color(0xFFB14CFF)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          border: Border.all(color: AppColors.accent, width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.5),
+              blurRadius: 16,
+            ),
+          ],
+        ),
+        alignment: Alignment.center,
+        child: ClipOval(
+          child: Image.asset(
+            'assets/images/jeff.png',
+            width: 60,
+            height: 60,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) =>
+                const Icon(Icons.person, color: Colors.white, size: 38),
+          ),
+        ),
+      ),
     );
   }
 }
