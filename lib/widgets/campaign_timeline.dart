@@ -16,7 +16,7 @@ class CampaignTimeline extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: PlayerProgress.instance,
-      builder: (_, _) {
+      builder: (ctx, _) {
         final progress = PlayerProgress.instance;
         final chapters = Campaign.chapters;
         return Column(
@@ -30,7 +30,7 @@ class CampaignTimeline extends StatelessWidget {
                 state: _stateFor(chapters[i], progress),
                 progress: progress.progressFor(chapters[i]),
                 onTap: progress.isUnlocked(chapters[i])
-                    ? () => Navigator.of(context).push(
+                    ? () => Navigator.of(ctx).push(
                           MaterialPageRoute(
                             builder: (_) => QuizScreen(chapter: chapters[i]),
                           ),

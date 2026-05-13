@@ -40,8 +40,9 @@ class _QuizScreenState extends State<QuizScreen> {
         _locked = false;
       });
     } else {
+      final navigator = Navigator.of(context);
       PlayerProgress.instance.recordScore(widget.chapter, _score);
-      Navigator.of(context).pushReplacement(
+      navigator.pushReplacement(
         MaterialPageRoute(
           builder: (_) => _ResultScreen(
             chapter: widget.chapter,
