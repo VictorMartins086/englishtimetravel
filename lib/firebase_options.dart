@@ -48,7 +48,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyDm4pTImMVytwFt-kLiQt1MIwJWI8kM0rg',
-    appId: '1:395588868163:web:fcf6671bc30658e3429cf6',
+    appId: '1:395588868163:web:75a10cf9bc4e33a8429cf6',
     messagingSenderId: '395588868163',
     projectId: 'english-time-travel-app',
     authDomain: 'english-time-travel-app.firebaseapp.com',
