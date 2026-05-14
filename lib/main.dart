@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -8,7 +11,23 @@ import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 
 Future<void> main() async {
+  runZonedGuarded(_appMain, (error, stack) {
+    // ignore: avoid_print
+    print('ZONE ERROR: $error\n$stack');
+  });
+}
+
+Future<void> _appMain() async {
   WidgetsFlutterBinding.ensureInitialized();
+  FlutterError.onError = (details) {
+    // ignore: avoid_print
+    print('FLUTTER ERROR: ${details.exceptionAsString()}\n${details.stack}');
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    // ignore: avoid_print
+    print('PLATFORM ERROR: $error\n$stack');
+    return true;
+  };
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
