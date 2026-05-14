@@ -43,8 +43,65 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class _TopBar extends StatelessWidget {
+class _TopBar extends StatefulWidget {
   const _TopBar();
+
+  @override
+  State<_TopBar> createState() => _TopBarState();
+}
+
+class _TopBarState extends State<_TopBar> {
+  bool _hasUnread = true;
+
+  void _openNotifications() {
+    final progress = PlayerProgress.instance;
+    final next = progress.currentChapter;
+    final last = progress.lastCompletedChapter;
+    final notifications = <_NotificationItem>[
+      _NotificationItem(
+        icon: Icons.flag_rounded,
+        color: AppColors.gold,
+        title: 'Missao diaria disponivel',
+        message:
+            'Complete 1 quiz hoje para ganhar +20 XP e manter sua sequencia.',
+      ),
+      _NotificationItem(
+        icon: next.icon,
+        color: next.color,
+        title: 'Proximo capitulo: ${next.title}',
+        message:
+            '${next.year} - ${next.location}. Jeff esta esperando voce em ${next.subtitle}.',
+      ),
+      if (last != null)
+        _NotificationItem(
+          icon: Icons.emoji_events_rounded,
+          color: AppColors.primary,
+          title: 'Capitulo concluido!',
+          message:
+              '"${last.title}" liberado. +${last.xpReward} XP e +${last.coinReward} moedas.',
+        ),
+      _NotificationItem(
+        icon: Icons.translate_rounded,
+        color: AppColors.accent,
+        title: 'Dica de cognato',
+        message:
+            'Palavras em ingles terminadas em -tion viram -cao em portugues: '
+            'nation/nacao, mission/missao, action/acao.',
+      ),
+    ];
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (ctx) => _NotificationsSheet(items: notifications),
+    ).then((_) {
+      if (mounted) setState(() => _hasUnread = false);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,23 +147,147 @@ class _TopBar extends StatelessWidget {
                 color: Colors.white,
                 size: 28,
               ),
-              onPressed: () {},
+              onPressed: _openNotifications,
+              tooltip: 'Notificacoes',
             ),
-            Positioned(
-              right: 10,
-              top: 10,
+            if (_hasUnread)
+              Positioned(
+                right: 10,
+                top: 10,
+                child: Container(
+                  width: 9,
+                  height: 9,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _NotificationItem {
+  const _NotificationItem({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.message,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String message;
+}
+
+class _NotificationsSheet extends StatelessWidget {
+  const _NotificationsSheet({required this.items});
+
+  final List<_NotificationItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
               child: Container(
-                width: 9,
-                height: 9,
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
+                width: 38,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                const Icon(
+                  Icons.notifications_active_rounded,
+                  color: AppColors.accent,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Notificacoes',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const Spacer(),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text(
+                    'Fechar',
+                    style: TextStyle(color: AppColors.accent),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ...items.map(
+              (n) => Container(
+                margin: const EdgeInsets.symmetric(vertical: 6),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: n.color.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(n.icon, color: n.color, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            n.title,
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            n.message,
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12.5,
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ],
         ),
-      ],
+      ),
     );
   }
 }
