@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "395588868163",
+    "project_id": "english-time-travel-app",
+    "storage_bucket": "english-time-travel-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:395588868163:android:0b6ded285d6803e1429cf6",
+        "android_client_info": {
+          "package_name": "com.chronokairo.english_time_travel"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKRAaLHxEnIIGWdVu1P_ev7AsB2JUc25E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
