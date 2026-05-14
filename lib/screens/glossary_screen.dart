@@ -1,3 +1,6 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
@@ -559,10 +562,21 @@ class _GlossaryTts {
 
   Future<void> _init() async {
     try {
-      await _tts.setLanguage('en-US');
+      // On Android, force the Google TTS engine which ships with high
+      // quality en-US voices on virtually every device. Without this the
+      // app may fall back to Samsung / device-OEM engines that default to
+      // the system locale and produce a non-American accent.
+      if (!kIsWeb && Platform.isAndroid) {
+        await _configureAndroidEngine();
+      }
       await _tts.setSpeechRate(0.45);
       await _tts.setPitch(1.0);
       await _tts.setVolume(1.0);
+      // Select voice first, then force the language. On Windows this prevents
+      // the engine from falling back to the OS default voice (e.g. Russian)
+      // when only setLanguage is called.
+      await _selectAmericanVoice();
+      await _tts.setLanguage('en-US');
     } catch (_) {
       // Some platforms throw if voices not yet loaded; safe to ignore.
     }
@@ -570,6 +584,115 @@ class _GlossaryTts {
     _tts.setCancelHandler(() => onComplete?.call());
     _tts.setErrorHandler((_) => onComplete?.call());
     _ready = true;
+  }
+
+  /// Picks the Google TTS engine on Android. Google's engine ships with
+  /// high-quality en-US voices on virtually every Android device, while
+  /// OEM engines (Samsung, Huawei, etc.) often default to the system
+  /// locale and produce a non-American accent.
+  Future<void> _configureAndroidEngine() async {
+    try {
+      final engines = await _tts.getEngines;
+      if (engines is List && engines.contains('com.google.android.tts')) {
+        await _tts.setEngine('com.google.android.tts');
+      }
+    } catch (_) {
+      // Not all Android builds expose getEngines/setEngine; ignore.
+    }
+  }
+
+  /// Known American English voice name fragments across Windows / macOS /
+  /// iOS / Android engines. Used to *positively* match a US voice instead
+  /// of trusting the (sometimes wrong) locale field reported by the engine.
+  static const List<String> _americanVoiceHints = <String>[
+    // Windows SAPI / Microsoft
+    'david', 'zira', 'mark', 'aria', 'guy', 'jenny', 'eric', 'michelle',
+    'ana', 'christopher', 'roger', 'steffan',
+    // Apple
+    'samantha', 'alex', 'fred', 'victoria', 'allison', 'ava', 'tom',
+    'evan', 'nicky', 'susan',
+    // Google / Android
+    'en-us-x-', 'en-us-',
+  ];
+
+  /// Voice name fragments that clearly indicate a NON-American voice. Used
+  /// as a hard exclusion list so a misreported locale can't sneak through.
+  static const List<String> _nonAmericanVoiceHints = <String>[
+    // Russian
+    'russian', 'russia', 'ru-ru', 'ru_ru', 'irina', 'pavel', 'maxim',
+    'dmitri', 'svetlana', 'ekaterina',
+    // Other non-US English / other locales we want to avoid
+    'british', 'uk', 'en-gb', 'en_gb', 'australia', 'en-au', 'en_au',
+    'india', 'en-in', 'en_in', 'ireland', 'en-ie', 'south africa',
+    'portugu', 'pt-br', 'pt_br', 'spanish', 'french', 'german',
+  ];
+
+  /// Forces a US English voice when available so pronunciation is American
+  /// (no British / Australian / Russian etc. accents picked by the OS).
+  Future<void> _selectAmericanVoice() async {
+    try {
+      final voices = await _tts.getVoices;
+      if (voices is! List) return;
+
+      // Normalize to a list of maps with string keys/values.
+      final allVoices = <Map<String, String>>[];
+      for (final v in voices) {
+        if (v is Map) {
+          final entry = <String, String>{};
+          v.forEach((key, value) {
+            entry[key.toString()] = value?.toString() ?? '';
+          });
+          allVoices.add(entry);
+        }
+      }
+
+      bool isAmerican(Map<String, String> v) {
+        final name = (v['name'] ?? '').toLowerCase();
+        final locale = (v['locale'] ?? '').toLowerCase().replaceAll('_', '-');
+
+        // Hard exclusion: name clearly points to another locale.
+        for (final bad in _nonAmericanVoiceHints) {
+          if (name.contains(bad) || locale.contains(bad)) return false;
+        }
+
+        // Positive match on locale OR on a known US voice name.
+        if (locale == 'en-us' || locale.startsWith('en-us')) return true;
+        for (final hint in _americanVoiceHints) {
+          if (name.contains(hint)) return true;
+        }
+        return false;
+      }
+
+      final usVoices = allVoices.where(isAmerican).toList();
+      if (usVoices.isEmpty) {
+        // No US voice installed on this device. Leave engine on default
+        // language; setLanguage('en-US') will be called by the caller.
+        return;
+      }
+
+      // Prefer high-quality / "enhanced" / "neural" voices when available.
+      Map<String, String> chosen = usVoices.first;
+      for (final v in usVoices) {
+        final name = (v['name'] ?? '').toLowerCase();
+        final quality = (v['quality'] ?? '').toLowerCase();
+        if (name.contains('enhanced') ||
+            name.contains('premium') ||
+            name.contains('neural') ||
+            name.contains('natural') ||
+            quality.contains('enhanced') ||
+            quality.contains('high')) {
+          chosen = v;
+          break;
+        }
+      }
+
+      await _tts.setVoice({
+        'name': chosen['name'] ?? '',
+        'locale': 'en-US',
+      });
+    } catch (_) {
+      // Voice selection is best-effort; en-US language is set by caller.
+    }
   }
 
   Future<void> speak(String text) async {

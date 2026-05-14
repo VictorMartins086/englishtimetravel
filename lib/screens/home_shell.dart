@@ -161,8 +161,9 @@ class _StoryDrawer extends StatelessWidget {
               title: 'Historia de Jeff',
               subtitle: 'Da Independencia em diante',
               onTap: () {
+                final navigator = Navigator.of(context, rootNavigator: true);
                 Navigator.pop(context);
-                Navigator.of(context).push(
+                navigator.push(
                   MaterialPageRoute(builder: (_) => const StoryScreen()),
                 );
               },
@@ -172,8 +173,9 @@ class _StoryDrawer extends StatelessWidget {
               title: 'Perfil',
               subtitle: 'Viajante do Tempo',
               onTap: () {
+                final navigator = Navigator.of(context, rootNavigator: true);
                 Navigator.pop(context);
-                Navigator.of(context).push(
+                navigator.push(
                   MaterialPageRoute(builder: (_) => const ProfileScreen()),
                 );
               },
