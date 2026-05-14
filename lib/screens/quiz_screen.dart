@@ -32,7 +32,7 @@ class _QuizScreenState extends State<QuizScreen> {
     });
   }
 
-  void _next() {
+  Future<void> _next() async {
     if (_index + 1 < widget.chapter.questions.length) {
       setState(() {
         _index++;
@@ -40,9 +40,9 @@ class _QuizScreenState extends State<QuizScreen> {
         _locked = false;
       });
     } else {
-      final navigator = Navigator.of(context);
-      PlayerProgress.instance.recordScore(widget.chapter, _score);
-      navigator.pushReplacement(
+      await PlayerProgress.instance.recordScore(widget.chapter, _score);
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => _ResultScreen(
             chapter: widget.chapter,
