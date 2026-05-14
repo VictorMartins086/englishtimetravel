@@ -1,6 +1,4 @@
-import 'dart:io' show Platform;
-
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
@@ -566,7 +564,7 @@ class _GlossaryTts {
       // quality en-US voices on virtually every device. Without this the
       // app may fall back to Samsung / device-OEM engines that default to
       // the system locale and produce a non-American accent.
-      if (!kIsWeb && Platform.isAndroid) {
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
         await _configureAndroidEngine();
       }
       await _tts.setSpeechRate(0.45);
